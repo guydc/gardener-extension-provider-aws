@@ -177,10 +177,37 @@ provider:
 Requirements & notes:
 * The referenced pool must exist in the same AWS account & region as the shoot infrastructure.
 * The pool must be IPv6 and have available capacity for a /56 CIDR; otherwise VPC creation will fail.
-* Only the pool ID is used; the extension currently always requests an IPv6 netmask length of /56 (not configurable yet).
+* The extension always requests an IPv6 netmask length of /56 (not configurable yet).
 * Changing the pool after creation is not supported (VPC IPv6 CIDRs are immutable once associated).
 
 Use this option when you operate centralized IP address management and need deterministic allocation ranges across shoots.
+
+#### Pinning a Specific IPv6 CIDR
+
+When replacing a cluster (e.g. blue/green rollout or disaster recovery), AWS Network Load Balancers derive their IPv6 addresses from the VPC's `/56` CIDR. If a new cluster gets a different `/56`, the NLB IPv6 addresses change — breaking DNS records, firewall rules, and client allowlists that reference those addresses.
+
+To keep NLB IPv6 addresses stable across cluster replacements, you can pin a specific `/56` block from the IPAM pool using the `infrastructureConfig.networks.vpc.ipv6CidrBlock` field. When the replacement cluster is provisioned with the same `/56` (once the previous cluster's VPC has been deleted and returned the block to the pool), the NLBs receive the same IPv6 addresses.
+
+Pinning the `/56` also makes pod egress IP ranges deterministic: in IPv6-only and dual-stack clusters, pods egress to the internet using addresses from the VPC's `/56` via the egress-only internet gateway. A stable `/56` means external firewall rules, partner allowlists, and compliance policies that reference pod source IPs by range remain valid across cluster replacements.
+
+```yaml
+provider:
+  type: aws
+  infrastructureConfig:
+    apiVersion: aws.provider.extensions.gardener.cloud/v1alpha1
+    kind: InfrastructureConfig
+    networks:
+      vpc:
+        ipv6IpamPool:
+          id: ipam-pool-0123456789abcdef0
+        ipv6CidrBlock: "2600:1f13:abcd::/56"
+...
+```
+
+Requirements & notes:
+* `ipv6IpamPool` must also be set; `ipv6CidrBlock` cannot be used without it.
+* The CIDR must be a `/56` and must be available in the pool at the time of VPC creation.
+* This field is immutable once set.
 
 ### Migration of IPv4-only Shoot Clusters to Dual-Stack
 

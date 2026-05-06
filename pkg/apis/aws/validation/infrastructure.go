@@ -6,6 +6,7 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"slices"
 	"strings"
 
@@ -170,6 +171,25 @@ func ValidateInfrastructureConfig(infra *apisaws.InfrastructureConfig, ipFamilie
 		allErrs = append(allErrs, services.ValidateNotOverlap(cidrs...)...)
 	}
 
+	if infra.Networks.VPC.Ipv6CidrBlock != nil {
+		ipv6CidrPath := networksPath.Child("vpc", "ipv6CidrBlock")
+		cidr := cidrvalidation.NewCIDR(*infra.Networks.VPC.Ipv6CidrBlock, ipv6CidrPath)
+		allErrs = append(allErrs, cidr.ValidateParse()...)
+		allErrs = append(allErrs, cidrvalidation.ValidateCIDRIsCanonical(ipv6CidrPath, *infra.Networks.VPC.Ipv6CidrBlock)...)
+		if !slices.Contains(ipFamilies, core.IPFamilyIPv6) {
+			allErrs = append(allErrs, field.Invalid(ipv6CidrPath, *infra.Networks.VPC.Ipv6CidrBlock, "ipv6CidrBlock requires an IPv6 IP family"))
+		}
+		if infra.Networks.VPC.Ipv6IpamPool == nil {
+			allErrs = append(allErrs, field.Invalid(ipv6CidrPath, *infra.Networks.VPC.Ipv6CidrBlock, "ipv6CidrBlock requires ipv6IpamPool to be set"))
+		}
+		if _, ipNet, err := net.ParseCIDR(*infra.Networks.VPC.Ipv6CidrBlock); err == nil {
+			ones, _ := ipNet.Mask.Size()
+			if ones != 56 {
+				allErrs = append(allErrs, field.Invalid(ipv6CidrPath, *infra.Networks.VPC.Ipv6CidrBlock, "ipv6CidrBlock must be a /56"))
+			}
+		}
+	}
+
 	allErrs = append(allErrs, ValidateIgnoreTags(field.NewPath("ignoreTags"), infra.IgnoreTags)...)
 
 	return allErrs
@@ -191,6 +211,10 @@ func ValidateInfrastructureConfigUpdate(oldConfig, newConfig *apisaws.Infrastruc
 	newVPC := newConfig.Networks.VPC
 	allErrs = append(allErrs, apivalidation.ValidateImmutableField(newVPC.ID, oldVPC.ID, vpcPath.Child("id"))...)
 	allErrs = append(allErrs, apivalidation.ValidateImmutableField(newVPC.CIDR, oldVPC.CIDR, vpcPath.Child("cidr"))...)
+	if oldVPC.Ipv6IpamPool != nil {
+		allErrs = append(allErrs, apivalidation.ValidateImmutableField(newVPC.Ipv6IpamPool, oldVPC.Ipv6IpamPool, vpcPath.Child("ipv6IpamPool"))...)
+	}
+	allErrs = append(allErrs, apivalidation.ValidateImmutableField(newVPC.Ipv6CidrBlock, oldVPC.Ipv6CidrBlock, vpcPath.Child("ipv6CidrBlock"))...)
 
 	var (
 		oldZones = oldConfig.Networks.Zones

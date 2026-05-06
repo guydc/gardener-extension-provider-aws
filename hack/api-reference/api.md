@@ -1779,6 +1779,18 @@ string array
 <p>Ipv6IpamPool references an AWS IPv6 IPAM pool used to allocate the VPC's IPv6 CIDR block.<br />If specified, the extension will request the VPC's IPv6 CIDR from this pool instead of<br />letting AWS auto-assign one. The pool must already exist in the target account/region.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>ipv6CidrBlock</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Ipv6CidrBlock is an optional specific IPv6 CIDR block to request from the IPAM pool.<br />When set, the VPC is created with this exact block instead of letting AWS pick one from the pool.<br />Requires Ipv6IpamPool to be set. Must be a /56 CIDR. This field is immutable once set.</p>
+</td>
+</tr>
 
 </tbody>
 </table>

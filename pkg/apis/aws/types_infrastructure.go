@@ -122,6 +122,10 @@ type VPC struct {
 	GatewayEndpoints []string
 	// Ipv6IpamPool references an AWS IPv6 IPAM pool used to allocate the VPC's IPv6 CIDR block.
 	Ipv6IpamPool *IPAMPool
+	// Ipv6CidrBlock is an optional specific IPv6 CIDR block to request from the IPAM pool.
+	// When set, the VPC is created with this exact block instead of letting AWS pick one from the pool.
+	// Requires Ipv6IpamPool to be set. Must be a /56 CIDR. This field is immutable once set.
+	Ipv6CidrBlock *string
 }
 
 // IPAMPool references an AWS IPAM pool that should be used to allocate the VPC's CIDR.
