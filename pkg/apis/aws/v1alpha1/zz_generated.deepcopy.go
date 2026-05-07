@@ -358,6 +358,11 @@ func (in *IPAMPool) DeepCopyInto(out *IPAMPool) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CidrBlock != nil {
+		in, out := &in.CidrBlock, &out.CidrBlock
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 
@@ -857,11 +862,6 @@ func (in *VPC) DeepCopyInto(out *VPC) {
 		in, out := &in.Ipv6IpamPool, &out.Ipv6IpamPool
 		*out = new(IPAMPool)
 		(*in).DeepCopyInto(*out)
-	}
-	if in.Ipv6CidrBlock != nil {
-		in, out := &in.Ipv6CidrBlock, &out.Ipv6CidrBlock
-		*out = new(string)
-		**out = **in
 	}
 	return
 }

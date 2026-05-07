@@ -385,9 +385,9 @@ var _ = Describe("Infrastructure tests", func() {
 				GatewayEndpoints: []string{s3GatewayEndpoint},
 			}, false)
 			providerConfig.Networks.VPC.Ipv6IpamPool = &awsv1alpha1.IPAMPool{
-				ID: ptr.To(ipamPoolID),
+				ID:        ptr.To(ipamPoolID),
+				CidrBlock: ptr.To(ipamPoolCIDR),
 			}
-			providerConfig.Networks.VPC.Ipv6CidrBlock = ptr.To(ipamPoolCIDR)
 
 			err = runTest(ctx, log, c, namespace, providerConfig, decoder, awsClient, []gardencorev1beta1.IPFamily{gardencorev1beta1.IPFamilyIPv6})
 			Expect(err).NotTo(HaveOccurred())
@@ -1042,8 +1042,8 @@ func verifyCreation(
 	if providerConfig.DualStack.Enabled || isIPv6(ipFamilies) {
 		Expect(describeVpcsOutput.Vpcs[0].Ipv6CidrBlockAssociationSet).ToNot(BeNil())
 		ipv6CidrBlock = describeVpcsOutput.Vpcs[0].Ipv6CidrBlockAssociationSet[0].Ipv6CidrBlock
-		if providerConfig.Networks.VPC.Ipv6CidrBlock != nil {
-			Expect(ipv6CidrBlock).To(PointTo(Equal(*providerConfig.Networks.VPC.Ipv6CidrBlock)))
+		if providerConfig.Networks.VPC.Ipv6IpamPool != nil && providerConfig.Networks.VPC.Ipv6IpamPool.CidrBlock != nil {
+			Expect(ipv6CidrBlock).To(PointTo(Equal(*providerConfig.Networks.VPC.Ipv6IpamPool.CidrBlock)))
 		}
 	}
 

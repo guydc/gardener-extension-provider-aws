@@ -138,11 +138,6 @@ type VPC struct {
 	// letting AWS auto-assign one. The pool must already exist in the target account/region.
 	// +optional
 	Ipv6IpamPool *IPAMPool `json:"ipv6IpamPool,omitempty"`
-	// Ipv6CidrBlock is an optional specific IPv6 CIDR block to request from the IPAM pool.
-	// When set, the VPC is created with this exact block instead of letting AWS pick one from the pool.
-	// Requires Ipv6IpamPool to be set. Must be a /56 CIDR. This field is immutable once set.
-	// +optional
-	Ipv6CidrBlock *string `json:"ipv6CidrBlock,omitempty"`
 }
 
 // IPAMPool represents an AWS IPAM pool referenced for IPv6 address allocation of the VPC.
@@ -150,6 +145,11 @@ type VPC struct {
 type IPAMPool struct {
 	// ID is the IPAM pool id.
 	ID *string `json:"id"`
+	// CidrBlock is an optional specific IPv6 CIDR block to request from the pool.
+	// When set, the VPC is created with this exact block instead of letting AWS pick one from the pool.
+	// Must be a /56 CIDR. This field is immutable once set.
+	// +optional
+	CidrBlock *string `json:"cidrBlock,omitempty"`
 }
 
 // VPCStatus contains information about a generated VPC or resources inside an existing VPC.
